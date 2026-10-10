@@ -1,122 +1,89 @@
-import { useState } from 'react'
-import heroImg from './assets/hero.png'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import './App.css'
+import { useState } from "react";
+import Game from "./Game";
+import { TOPICS, CATEGORIES, loadBank } from "./questions";
 
-function App() {
-  const [count, setCount] = useState(0)
+const Heading = ({ children }) => (
+  <h3 className="mb-2 mt-6 text-sm uppercase tracking-widest opacity-80">{children}</h3>
+);
+
+export default function App() {
+  const [cfg, setCfg] = useState({ topic: "mixed", level: "JSS1", seconds: 15, mode: "single", cat: 19 });
+  const [playing, setPlaying] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [note, setNote] = useState("");
+  const set = (k, v) => setCfg((c) => ({ ...c, [k]: v }));
+
+  async function start() {
+    if (cfg.topic === "trivia" || cfg.topic === "custom") {
+      setLoading(true);
+      const ok = await loadBank(cfg.topic, cfg.cat);
+      setLoading(false);
+      if (!ok) {
+        setNote(cfg.topic === "custom"
+          ? "Couldn't load public/questions.json"
+          : "Couldn't reach the trivia server. Check the internet and wait 5 seconds.");
+        return;
+      }
+    }
+    setNote("");
+    setPlaying(true);
+  }
+
+  if (playing) return <Game {...cfg} onExit={() => setPlaying(false)} />;
+
+  const chip = (k, v, label) => (
+    <button
+      key={String(v)}
+      onClick={() => set(k, v)}
+      className={`rounded-full border-2 px-4 py-2.5 transition ${
+        cfg[k] === v ? "border-amber-400 bg-amber-950" : "border-transparent bg-slate-800 hover:bg-slate-700"
+      }`}
+    >
+      {label}
+    </button>
+  );
+
+  const Chips = ({ children }) => <div className="flex flex-wrap justify-center gap-2">{children}</div>;
+  const noLevel = ["trivia", "custom"].includes(cfg.topic);
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.jsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
+    <main className="mx-auto min-h-screen max-w-3xl px-4 pb-10 pt-5 text-center">
+      <h1 className="mt-2 text-5xl font-bold sm:text-6xl">
+        🪢 Brain<span className="text-amber-400">Tug</span>
+      </h1>
+      <p className="opacity-70">Pull with your brain!</p>
 
-      <div className="ticks"></div>
+      <Heading>Mode</Heading>
+      <Chips>
+        {chip("mode", "single", "👤 Vs Bot")}
+        {chip("mode", "multi", "👥 2 Players")}
+      </Chips>
 
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
+      <Heading>Topic</Heading>
+      <Chips>{TOPICS.map((t) => chip("topic", t.id, `${t.icon} ${t.label}`))}</Chips>
 
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
-  )
+      {cfg.topic === "trivia" && (
+        <>
+          <Heading>Trivia category</Heading>
+          <Chips>{CATEGORIES.map((c) => chip("cat", c.id, c.label))}</Chips>
+        </>
+      )}
+
+      <Heading>Level {noLevel && "(not used for this topic)"}</Heading>
+      <Chips>{["JSS1", "JSS2", "JSS3"].map((l) => chip("level", l, l))}</Chips>
+
+      <Heading>Seconds per question</Heading>
+      <Chips>{[10, 15, 20, 30].map((s) => chip("seconds", s, `${s}s`))}</Chips>
+
+      {note && <p className="mt-5 font-bold text-rose-300">{note}</p>}
+
+      <button
+        disabled={loading}
+        onClick={start}
+        className="mt-8 w-full max-w-sm rounded-2xl bg-amber-400 py-4 text-2xl font-bold text-stone-900 shadow-[0_6px_0_#b45309] transition active:translate-y-1 active:shadow-[0_2px_0_#b45309] disabled:opacity-60"
+      >
+        {loading ? "Loading questions…" : "▶ Start"}
+      </button>
+    </main>
+  );
 }
-
-export default App
