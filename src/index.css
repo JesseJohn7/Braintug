@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Baloo 2", system-ui, sans-serif;
+
+  --animate-tug: tug 0.5s;
+  --animate-fall: fall 0.8s forwards;
+  --animate-pop: pop 0.4s;
+  --animate-beat: beat 0.5s infinite alternate;
+  --animate-shake: shake 0.3s;
+
+  @keyframes tug {
+    40% { transform: translateY(-14px) rotate(-6deg); }
+  }
+  @keyframes fall {
+    to { transform: translateY(26px) rotate(90deg); }
+  }
+  @keyframes pop {
+    from { transform: scale(0.6); opacity: 0; }
+  }
+  @keyframes beat {
+    to { transform: scale(1.12); }
+  }
+  @keyframes shake {
+    25% { transform: translateX(-8px); }
+    75% { transform: translateX(8px); }
+  }
+}
